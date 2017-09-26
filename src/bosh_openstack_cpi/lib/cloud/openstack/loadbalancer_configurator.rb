@@ -81,10 +81,18 @@ module Bosh::OpenStackCloud
         resource = LoadBalancerResource.new(loadbalancer_id, @openstack)
         @openstack.wait_resource(resource, :active, :provisioning_status)
         @openstack.with_openstack do
+          retries = 0
           begin
             @openstack.network.delete_lbaas_pool_member(pool_id, membership_id)
           rescue Fog::Network::OpenStack::NotFound
             @logger.debug("Skipping deletion of lbaas pool member. Member with pool_id '#{pool_id}' and membership_id '#{membership_id}' does not exist.")
+          rescue Excon::Error::Conflict
+            unless retries >= Openstack::MAX_RETRIES
+              retries += 1
+              @logger.debug("OpenStack API Conflict error, retrying (#{retries})") if @logger
+              sleep(15)
+              retry
+            end
           end
         end
         @openstack.wait_resource(resource, :active, :provisioning_status)

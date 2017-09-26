@@ -401,6 +401,27 @@ describe Bosh::OpenStackCloud::LoadbalancerConfigurator do
           subject.remove_vm_from_pool(pool_id, membership_id)
         }.to raise_error(Bosh::Clouds::CloudError, "Deleting LBaaS member with pool_id 'pool-id' and membership_id 'membership-id' failed. Reason: Fog::Network::OpenStack::Error BOOM!!!")
       end
+
+      context 'because loadbalancer is in status PENDING_UPDATE' do
+        let(:body) { JSON.dump('SomeError' => {'message' => 'Invalid state PENDING_UPDATE of loadbalancer resource 1234-abcd'}) }
+        let(:response) { Excon::Response.new(body: body.to_s) }
+
+        before do
+          @times_called = 0
+          allow(network).to receive(:delete_lbaas_pool_member) do
+            @times_called += 1
+            raise Excon::Error::Conflict.new('', '', response) if @times_called <= 1
+          end
+        end
+
+        it 'tries to delete again' do
+          expect(network).to receive(:delete_lbaas_pool_member).exactly(2)
+          # expect(network).to raise_error(Excon::Error::Conflict).exactly(1)
+          expect_any_instance_of(Kernel).to receive(:sleep).with(15).exactly(1)
+
+          subject.remove_vm_from_pool(pool_id, membership_id)
+        end
+      end
     end
   end
 
