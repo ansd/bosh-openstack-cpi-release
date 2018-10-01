@@ -11,7 +11,7 @@ It displays a staus of `pending`, `success`, or `failure` in the `Conversation` 
 
 The CPI pipeline is triggered periodically and on every commit of this repo. The following jobs are run:
 1. `build-candidate` runs unit tests and creates a new CPI bosh release.
-2. `bats-[ubuntu|centos]-[manual|dynamic]` executes the [bosh acceptance tests](https://github.com/cloudfoundry/bosh-acceptance-tests).
+2. `bats-(ubuntu|centos)-(manual|dynamic)` executes the [bosh acceptance tests](https://github.com/cloudfoundry/bosh-acceptance-tests).
 3. `lifecycle` runs CPI integration tests.
 4. `publish-api-calls` collects all Openstack API calls from the CPI and uploads the list to [docs/openstack-api-calls.md](https://github.com/cloudfoundry-incubator/bosh-openstack-cpi-release/blob/master/docs/openstack-api-calls.md).
 5. `promote-candidate` creates and commits a final release.
